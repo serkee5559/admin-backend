@@ -1,5 +1,5 @@
-# 1. 빌드 스테이지 (Gradle 9.0으로 버전 업)
-FROM gradle:9.0-jdk17 AS build
+# 1. 빌드 스테이지
+FROM gradle:8.10-jdk17 AS build
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 RUN gradle build --no-daemon -x test
