@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/defaultLayout}">
+<div layout:fragment="content">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <div class="bg-white p-8 rounded-xl shadow-md min-h-screen">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+        📅 사내 일정 관리
+      </h1>
+      <button onclick="openModal()" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 font-bold">
+        <i data-lucide="plus" class="w-5 h-5"></i>
+        <span>일정 등록</span>
+      </button>
+    </div>
+
+    <div id="calendar" class="p-4 border rounded-xl bg-gray-50 shadow-inner"></div>
+  </div>
+
+  <div id="scheduleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl transform transition-all">
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="modalHeadline" class="text-2xl font-bold text-gray-800">새 일정 등록</h2>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <form id="scheduleForm" class="space-y-5">
+        <input type="hidden" id="modalId">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">일정 제목</label>
+          <input type="text" id="modalTitle" required placeholder="예: 팀 주간 회의"
+                 class="w-full border-gray-300 rounded-lg p-3 border outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">참석 대상자</label>
+          <div class="mb-3">
+            <select id="memberSelect" onchange="handleMemberSelect(this)"
+                    class="w-full border-gray-300 rounded-lg p-3 border outline-none text-sm focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">선택</option>
+            </select>
+          </div>
+
+          <div id="participantList" class="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-xl min-h-[50px] border border-dashed border-gray-300">
+            <p id="emptyMsg" class="text-xs text-gray-400 self-center mx-auto">선택된 대상자가 없습니다.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">시작 일시</label>
+            <input type="datetime-local" id="modalStart" required
+                   class="w-full border-gray-300 rounded-lg p-3 border outline-none text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">종료 일시</label>
+            <input type="datetime-local" id="modalEnd" required
+                   class="w-full border-gray-300 rounded-lg p-3 border outline-none text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-3">테마 색상 선택</label>
+          <div class="flex items-center gap-4 p-1">
+            <label class="relative cursor-pointer">
+              <input type="radio" name="colorOption" value="#3b82f6" class="peer sr-only" checked>
+              <div class="w-8 h-8 rounded-full bg-blue-500 ring-offset-2 peer-checked:ring-2 ring-blue-500 transition-all"></div>
+            </label>
+            <label class="relative cursor-pointer">
+              <input type="radio" name="colorOption" value="#10b981" class="peer sr-only">
+              <div class="w-8 h-8 rounded-full bg-emerald-500 ring-offset-2 peer-checked:ring-2 ring-emerald-500 transition-all"></div>
+            </label>
+            <label class="relative cursor-pointer">
+              <input type="radio" name="colorOption" value="#f59e0b" class="peer sr-only">
+              <div class="w-8 h-8 rounded-full bg-amber-500 ring-offset-2 peer-checked:ring-2 ring-amber-500 transition-all"></div>
+            </label>
+            <label class="relative cursor-pointer">
+              <input type="radio" name="colorOption" value="#f43f5e" class="peer sr-only">
+              <div class="w-8 h-8 rounded-full bg-rose-500 ring-offset-2 peer-checked:ring-2 ring-rose-500 transition-all"></div>
+            </label>
+            <label class="relative cursor-pointer">
+              <input type="radio" name="colorOption" value="#8b5cf6" class="peer sr-only">
+              <div class="w-8 h-8 rounded-full bg-purple-500 ring-offset-2 peer-checked:ring-2 ring-purple-500 transition-all"></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+          <div id="viewButtons" class="hidden flex-1 flex gap-3">
+            <button type="button" onclick="deleteSchedule()" class="flex-1 px-4 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition font-bold">삭제</button>
+            <button type="button" onclick="enableEditMode()" class="flex-1 px-4 py-3 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition font-bold">수정하기</button>
+<!--            <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-bold">닫기</button>-->
+          </div>
+
+          <div id="editButtons" class="hidden flex-1 flex gap-3">
+            <button type="submit" class="flex-[2] px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-lg font-bold">수정완료</button>
+            <button type="button" onclick="disableEditMode()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-bold">취소</button>
+          </div>
+
+          <div id="registerButtons" class="hidden flex-1 flex gap-3">
+            <button type="submit" class="flex-[2] px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-lg font-bold">저장하기</button>
+            <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition font-bold">취소</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar');
+      let allMembers = []; // 사원 목록 저장
+      let selectedParticipants = []; // 선택된 사원 ID 저장
+
+      // 1. 달력 초기화
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ko',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        events: '/api/schedules',
+        selectable: true,
+        height: 'auto',
+        eventClick: function(info) {
+          openModalForEdit(info.event);
+        },
+        select: function(info) {
+          openModal(info.startStr, info.endStr);
+        }
+      });
+      calendar.render();
+
+      // 2. 사원 목록 사전 호출
+      fetch('/api/members')
+              .then(res => res.json())
+              .then(data => {
+                allMembers = data;
+                const select = document.getElementById('memberSelect');
+                data.forEach(m => {
+                  const opt = document.createElement('option');
+                  opt.value = m.id;
+                  opt.textContent = `${m.name} (${m.department})`;
+                  select.appendChild(opt);
+                });
+              });
+
+      // --- [신규 추가] 필드 상태 및 버튼 제어 함수 ---
+      const setFieldsDisabled = (disabled) => {
+        const fields = ['modalTitle', 'modalStart', 'modalEnd', 'memberSelect'];
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if(el) el.disabled = disabled;
+        });
+        document.querySelectorAll('input[name="colorOption"]').forEach(radio => radio.disabled = disabled);
+
+        // 조회 모드일 때는 태그의 삭제 버튼(X) 숨김
+        const tags = document.querySelectorAll('.participant-tag button');
+        tags.forEach(btn => btn.style.display = disabled ? 'none' : 'inline-block');
+      };
+
+      const showButtonGroup = (mode) => {
+        document.getElementById('viewButtons').classList.add('hidden');
+        document.getElementById('editButtons').classList.add('hidden');
+        document.getElementById('registerButtons').classList.add('hidden');
+
+        if(mode === 'view') document.getElementById('viewButtons').classList.remove('hidden');
+        else if(mode === 'edit') document.getElementById('editButtons').classList.remove('hidden');
+        else if(mode === 'register') document.getElementById('registerButtons').classList.remove('hidden');
+      };
+
+      // 색상 체크 함수
+      const setColorRadio = (colorCode) => {
+        const radios = document.querySelectorAll('input[name="colorOption"]');
+        radios.forEach(radio => {
+          if (radio.value === colorCode) radio.checked = true;
+        });
+      };
+
+      // --- [수정] 모달 제어 함수들 ---
+
+      // 1. 수정/확인 모달 열기 (최초 조회 모드)
+      window.openModalForEdit = function(event) {
+        document.getElementById('modalHeadline').innerText = "일정 수정/확인";
+        document.getElementById('modalId').value = event.id;
+        document.getElementById('modalTitle').value = event.title.replace(/\[.*?\] /, "");
+        document.getElementById('modalStart').value = event.startStr.substring(0, 16);
+        document.getElementById('modalEnd').value = event.endStr ? event.endStr.substring(0, 16) : event.startStr.substring(0, 16);
+        setColorRadio(event.backgroundColor);
+
+        // 참석자 로드
+        selectedParticipants = [];
+        const container = document.getElementById('participantList');
+        container.innerHTML = "";
+        const participants = event.extendedProps.participants;
+        if (participants && participants.length > 0) {
+          participants.forEach(p => selectedParticipants.push(p.id.toString()));
+          renderParticipantTags();
+        } else {
+          container.innerHTML = '<p id="emptyMsg" class="text-xs text-gray-400 self-center mx-auto">선택된 대상자가 없습니다.</p>';
+        }
+
+        setFieldsDisabled(true); // 입력 잠금
+        showButtonGroup('view'); // [삭제, 수정하기, 닫기] 버튼 표시
+        document.getElementById('scheduleModal').classList.remove('hidden');
+      };
+
+      // 2. 수정 모드로 전환
+      window.enableEditMode = function() {
+        setFieldsDisabled(false); // 잠금 해제
+        showButtonGroup('edit'); // [수정완료, 취소] 버튼 표시
+        document.getElementById('modalHeadline').innerText = "일정 편집 중...";
+      };
+
+      // 3. 등록 모달 열기
+      window.openModal = function(start, end) {
+        document.getElementById('modalHeadline').innerText = "새 일정 등록";
+        document.getElementById('modalId').value = "";
+        document.getElementById('scheduleForm').reset();
+        selectedParticipants = [];
+        renderParticipantTags();
+
+        if(start) {
+          const formatStr = (str) => str.includes('T') ? str.substring(0, 16) : str + "T09:00";
+          document.getElementById('modalStart').value = formatStr(start);
+          document.getElementById('modalEnd').value = end ? formatStr(end) : formatStr(start);
+        }
+
+        setFieldsDisabled(false); // 입력 허용
+        showButtonGroup('register'); // [저장하기, 취소] 버튼 표시
+        document.getElementById('scheduleModal').classList.remove('hidden');
+      };
+
+      window.closeModal = function() {
+        document.getElementById('scheduleModal').classList.add('hidden');
+        document.getElementById('scheduleForm').reset();
+        selectedParticipants = [];
+        renderParticipantTags();
+      };
+
+      // 저장/수정 처리
+      document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('modalId').value;
+        const selectedColor = document.querySelector('input[name="colorOption"]:checked').value;
+
+        const scheduleData = {
+          id: id ? id : null,
+          title: document.getElementById('modalTitle').value,
+          start: document.getElementById('modalStart').value,
+          end: document.getElementById('modalEnd').value,
+          color: selectedColor,
+          category: '사내일정',
+          participantIds: selectedParticipants
+        };
+
+        fetch('/api/schedules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(scheduleData)
+        })
+                .then(response => {
+                  if(response.ok) {
+                    calendar.refetchEvents();
+                    closeModal();
+                  } else {
+                    alert("저장에 실패했습니다.");
+                  }
+                });
+      });
+
+      // 삭제 처리
+      window.deleteSchedule = function() {
+        const id = document.getElementById('modalId').value;
+        if(id && confirm("정말 삭제하시겠습니까?")) {
+          fetch('/api/schedules/' + id, { method: 'DELETE' })
+                  .then(response => {
+                    if(response.ok) {
+                      calendar.refetchEvents();
+                      closeModal();
+                    }
+                  });
+        }
+      };
+
+      // 참석자 선택/삭제 로직
+      window.handleMemberSelect = function(selectElement) {
+        const memberId = selectElement.value;
+        if (!memberId) return;
+        if (selectedParticipants.includes(memberId)) {
+          alert("이미 추가된 직원입니다.");
+          selectElement.value = "";
+          return;
+        }
+        const member = allMembers.find(m => m.id == memberId);
+        if (member) {
+          selectedParticipants.push(memberId);
+          renderParticipantTags();
+        }
+        selectElement.value = "";
+      };
+
+      function renderParticipantTags() {
+        const container = document.getElementById('participantList');
+        const emptyMsg = document.getElementById('emptyMsg');
+        container.querySelectorAll('.participant-tag').forEach(tag => tag.remove());
+
+        if (selectedParticipants.length > 0) {
+          if(emptyMsg) emptyMsg.classList.add('hidden');
+          selectedParticipants.forEach(id => {
+            const member = allMembers.find(m => m.id == id);
+            const tag = document.createElement('div');
+            tag.className = "participant-tag bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 border border-blue-200";
+            // 조회 모드일 때는 버튼을 숨기기 위해 초기 display 설정
+            const isViewMode = document.getElementById('modalHeadline').innerText === "일정 수정/확인";
+            tag.innerHTML = `
+              <span>${member.name}</span>
+              <button type="button" onclick="removeParticipant('${id}')"
+                      class="text-blue-500 hover:text-red-500 font-bold ml-1 text-base"
+                      style="display: ${isViewMode ? 'none' : 'inline-block'}">×</button>
+            `;
+            container.appendChild(tag);
+          });
+        } else {
+          if(emptyMsg) emptyMsg.classList.remove('hidden');
+        }
+      }
+
+      window.removeParticipant = function(id) {
+        selectedParticipants = selectedParticipants.filter(p => p != id);
+        renderParticipantTags();
+      };
+
+      lucide.createIcons();
+    });
+  </script>
+
+  <style>
+    .fc-header-toolbar { margin-bottom: 1.5rem !important; }
+    .fc-toolbar-title { font-size: 1.25rem !important; font-weight: 800 !important; color: #1f2937; }
+    .fc-button-primary { background-color: #ffffff !important; border-color: #d1d5db !important; color: #374151 !important; font-weight: 600 !important; }
+    .fc-button-primary:hover { background-color: #f3f4f6 !important; }
+    .fc-button-active { background-color: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
+    .fc-daygrid-day-number { font-size: 0.875rem; font-weight: 500; color: #4b5563; padding: 8px !important; }
+    .fc-event { border: none !important; padding: 3px 6px !important; border-radius: 6px !important; cursor: pointer; font-size: 0.85rem; }
+  </style>
+</div>
+</html>

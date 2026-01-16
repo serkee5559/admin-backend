@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    # image_f5f1e6.jpg에서 복사한 주소를 넣으세요 (password 부분 제외)
+    url: jdbc:postgresql://db.tqtcapligrwbsbtgimsu.supabase.co:5432/postgres
+    username: postgres
+    # Supabase 프로젝트 생성 시 설정한 비밀번호를 넣으세요
+    password: Q!w2e3r4t5y6
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true

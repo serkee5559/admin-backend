@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>사내 어드민 - 회원 목록</title>
+  <style>
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    tr:hover { background-color: #f9f9f9; }
+  </style>
+</head>
+<body>
+<h1>회원 관리 목록</h1>
+<table>
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>이름</th>
+    <th>이메일</th>
+    <th>부서</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="member : ${members}">
+    <td th:text="${member.id}">1</td>
+    <td th:text="${member.name}">홍길동</td>
+    <td th:text="${member.email}">hong@test.com</td>
+    <td th:text="${member.department}">개발팀</td>
+  </tr>
+  </tbody>
+</table>
+</body>
+</html>
