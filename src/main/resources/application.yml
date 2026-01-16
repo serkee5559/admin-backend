@@ -1,8 +1,15 @@
 spring:
   datasource:
-    url: jdbc:postgresql://db.tqtcapligrwbsbtgimsu.supabase.co:5432/postgres
-    username: postgres # root에서 postgres로 수정
+    # 1. 포트는 6543, 뒤에 옵션은 ?prepareThreshold=0를 사용합니다.
+    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?prepareThreshold=0
+
+    # 2. [매우 중요] username 형식을 반드시 아래와 같이 쓰세요.
+    # 프로젝트ID 다음에 마침표(.)를 찍고 postgres를 붙입니다.
+    username: postgres.tqtcapligrwbsbtgimsu
+
+    # 3. 비밀번호는 설정하신 것을 유지합니다.
     password: Q!w2e3r4t5y6
+
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -11,9 +18,4 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect # 이 줄을 추가하면 더 안전합니다
-        format_sql: true
-
-  thymeleaf:
-    cache: false
-    check-template-location: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect

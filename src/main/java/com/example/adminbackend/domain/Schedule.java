@@ -15,7 +15,9 @@ public class Schedule {
 
     private String title;
     private String category;
+    @Column(name = "start_time")
     private LocalDateTime start;
+    @Column(name = "end_time")
     private LocalDateTime end;
     private String color;
 

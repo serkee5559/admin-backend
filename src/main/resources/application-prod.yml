@@ -1,15 +1,21 @@
 spring:
   datasource:
-    # image_f5f1e6.jpg에서 복사한 주소를 넣으세요 (password 부분 제외)
-    url: jdbc:postgresql://db.tqtcapligrwbsbtgimsu.supabase.co:5432/postgres
-    username: postgres
-    # Supabase 프로젝트 생성 시 설정한 비밀번호를 넣으세요
+    # 1. URL 포트는 6543, 뒤에 ?prepareThreshold=0 옵션을 유지합니다.
+    url: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?prepareThreshold=0
+
+    # 2. [최종 수정] 프로젝트 ID를 앞에 쓰고 마침표(.) 뒤에 postgres를 붙입니다.
+    # 사용자님의 아이디: tqtcapligrwbsbtgimsu
+    username: postgres.tqtcapligrwbsbtgimsu
+
+    # 3. 비밀번호는 기존 설정을 유지합니다.
     password: Q!w2e3r4t5y6
+
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
